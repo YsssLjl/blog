@@ -40,7 +40,7 @@ module.exports = {
                         path: "/handbook/modules"
                     },
                     {
-                        title: "promise",
+                        title: "Promise",
                         path: "/handbook/promise"
                     }
                 ],
