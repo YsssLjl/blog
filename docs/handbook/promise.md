@@ -4,9 +4,9 @@ author: Ys
 date: '2021-12-28'
 ---
 
-# 实现一个Promise
+## 实现一个Promise
 
-# 01. 平常用promise的时候, 是通过new关键字来new Promise(), 我们采用Class来实现.
+### 01. 平常用promise的时候, 是通过new关键字来new Promise(), 我们采用Class来实现.
 
 ```js
 class MPromise {
@@ -16,7 +16,7 @@ class MPromise {
 }
 ```
 
-# 02. 定义三种状态类型
+### 02. 定义三种状态类型
 
 ```js
 const PENDING = 'pending';
@@ -24,7 +24,7 @@ const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 ```
 
-# 03. 设置初始状态
+### 03. 设置初始状态
 
 ```js
 class MPromise {
@@ -37,7 +37,7 @@ class MPromise {
 }
 ```
 
-# 04. resolve 和 reject 方法
+### 04. resolve 和 reject 方法
     4.1 根据刚才的规范, 这两个方法是要更改status的, 从pending改到fulfilled/rejected.
     4.2 注意两个函数的入参分别是value 和 reason. 
 
@@ -66,7 +66,7 @@ class MPromise {
 }
 ```
 
-# 05. 是不是发现咱们的promise少了入参, 咱们来加一下
+### 05. 是不是发现咱们的promise少了入参, 咱们来加一下
     5.1 入参是一个函数, 函数接收resolve和reject两个参数.
     5.2 注意在初始化promise的时候, 就要执行这个函数, 并且有任何报错都要通过reject抛出去
 
@@ -103,7 +103,7 @@ class MPromise {
 
     
 
-# 06. 接下来来实现一下关键的then方法
+### 06. 接下来来实现一下关键的then方法
 
     6.1 then接收两个参数, onFulfilled 和 onRejected
 
@@ -239,7 +239,7 @@ class MPromise {
         }
 ```
 
-# 07. then的返回值
+### 07. then的返回值
 
     上面只是简单说了下,then的返回值是一个Promise, 那么接下来具体讲一下返回promise的value和reason是什么.
 
@@ -355,7 +355,7 @@ class MPromise {
 
         
 
-# 08. resolvePromise
+### 08. resolvePromise
 
 ```js
 resolvePromise(promise2, x, resolve, reject) {
@@ -429,7 +429,7 @@ resolvePromise(promise2, x, resolve, reject) {
 }
 ```
 
-# 09. onFulfilled 和 onRejected 是微任务
+### 09. onFulfilled 和 onRejected 是微任务
 
     咱们可以用queueMicrotask包裹执行函数
 
@@ -456,7 +456,7 @@ const rejectedMicrotask = () => {
 }
 ```
 
-# 10. 简单写点代码测试一下
+### 10. 简单写点代码测试一下
 
 ```js
 const test = new MPromise((resolve, reject) => {
@@ -475,7 +475,7 @@ setTimeout(() => {
 
     这个时候同学们会发现, 为什么我可以调用.then, 不可以调用.catch呢? 因为我们并没有在类里面声明catch方法
 
-# 11. catch方法
+### 11. catch方法
 
 ```js
 catch (onRejected) {
@@ -483,7 +483,7 @@ catch (onRejected) {
 }
 ```
 
-# 12. promise.resolve
+### 12. promise.resolve
 
     将现有对象转为Promise对象,如果 Promise.resolve 方法的参数,
     不是具有 then 方法的对象(又称 thenable 对象),则返回一个新的 Promise 对象,且它的状态为fulfilled.
@@ -501,7 +501,7 @@ static resolve(value) {
 }
 ```
 
-# 13. promise.reject
+### 13. promise.reject
 
     返回一个新的Promise实例,该实例的状态为rejected.Promise.reject方法的参数reason,会被传递给实例的回调函数.
 
@@ -513,7 +513,7 @@ static reject(reason) {
 }
 ```
 
-# 14. promise.race
+### 14. promise.race
 
  `const p = Promise.race([p1, p2, p3]);`
 
@@ -568,7 +568,7 @@ const test3 = new MPromise((resolve, reject) => {
 MPromise.race([test, test2, test3]).then(console.log);
 ```
 
-# 15. promise.all
+### 15. promise.all
 
  `const p = Promise.all([p1, p2, p3]);`
 
