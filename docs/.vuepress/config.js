@@ -42,6 +42,18 @@ module.exports = {
                     {
                         title: "Promise",
                         path: "/handbook/promise"
+                    },
+                    {
+                        title: "面向对象编程",
+                        path: "/handbook/oop"
+                    },
+                    {
+                        title: "原型及原型链",
+                        path: "/handbook/prototype"
+                    },
+                    {
+                        title: "继承",
+                        path: "/handbook/extends"
                     }
                 ],
             }

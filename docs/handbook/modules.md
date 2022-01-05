@@ -1,509 +1,254 @@
 ---
-title: JS模块化
+title: oop
 author: Ys
-date: '2021-12-28'
+date: '2021-01-05'
 ---
 
-## JS模块化
+# 继承
 
-### 1. 不得不说的历史
+## 原型链继承
 
-#### 背景
+### 实现
 
-JS本身简单的页面设计：页面动画 + 表单提交
-并无模块化 or 命名空间的概念
-
-> JS的模块化需求日益增长
-
-#### 幼年期： 无模块化
-
-1. 开始需要在页面中增加一些不同的js：动画、表单、格式化
-2. 多种js文件被分在不同的文件中
-3. 不同的文件又被同一个模板引用
-
-```js
-  < script src = "jquery.js" > < /script> <
-      script src = "main.js" > < /script> <
-      script src = "dep1.js" > < /script>
-  //……
-```
-
-认可：
-文件分离是最基础的模块化第一步
-问题出现：
-* 污染全局作用域 => 不利于大型项目的开发以及多人团队的共建
-
-#### 成长期： 模块化的雏形 - IIFE（语法侧的优化）
-
-##### 作用域的把控
-栗子：
-
-```js
-  // 定义一个全局变量
-  let count = 0;
-  // 代码块1
-  const increase = () => ++count;
-  // 代码块2
-  const reset = () => {
-      count = 0;
-  }
-
-  increase();
-  reset();
-```
-
-利用函数块级作用域
-
-```js
-  (() => {
-          let count = 0;
-          // ……
-      }
-```
-
-仅定义了一个函数，如果立即执行
-
-```js
-  (() => {
-          let count = 0;
-          // ……
-      }();
-```
-
-初步实现了一个最最最最简单的模块
-
-尝试去定义一个最简单的模块
-
-```js
-const iifeModule = (() => {
-    let count = 0;
-    return {
-        increase: () => ++count;
-        reset: () => {
-            count = 0;
-        }
-    }
-})();
-
-iifeModule.increase();
-iifeModule.reset();
-```
-
-**追问：有额外依赖时，如何优化IIFE相关代码**
-
-> 优化1： 依赖其他模块的IIFE
-
-```js
-const iifeModule = ((dependencyModule1, dependencyModule2) => {
-    let count = 0;
-    return {
-        increase: () => ++count;
-        reset: () => {
-            count = 0;
-        }
-    }
-})(dependencyModule1, dependencyModule2);
-iifeModule.increase();
-iifeModule.reset();
-```
-
-**面试1：了解早期jquery的依赖处理以及模块加载方案吗？/ 了解传统IIFE是如何解决多方依赖的问题
-答：IIFE加传参调配**
-
-实际上，jquery等框架其实应用了revealing的写法：
-揭示模式
-
-```js
-const iifeModule = ((dependencyModule1, dependencyModule2) => {
-    let count = 0;
-    const increase = () => ++count;
-    const reset = () => {
-        count = 0;
-    }
-
-    return {
-        increase,
-        reset
-    }
-})(dependencyModule1, dependencyModule2);
-iifeModule.increase();
-iifeModule.reset();
-```
-
-#### 成熟期：
-
-##### CJS - Commonjs
-
-> node.js制定
-
-特征：
-* 通过module + exports 去对外暴露接口
-* 通过require来调用其他模块
-
-模块组织方式
-main.js 文件
-
-```js
-// 引入部分
-const dependencyModule1 = require(. / dependencyModule1);
-const dependencyModule2 = require(. / dependencyModule2);
-
-// 处理部分
-let count = 0;
-const increase = () => ++count;
-const reset = () => {
-    count = 0;
+```javascript
+function Parent() {
+  this.name = "parentName";
 }
-// 做一些跟引入依赖相关事宜……
 
-// 暴露接口部分
-exports.increase = increase;
-exports.reset = reset;
+Parent.prototype.getName = function () {
+  console.log(this.name);
+};
 
-module.exports = {
-    increase,
-    reset
+function Child() {}
+
+// Parent的实例同时包含实例属性方法和原型属性方法，所以把new Parent()赋值给Child.prototype。
+// 如果仅仅Child.prototype = Parent.prototype，那么Child只能调用getName，无法调用.name
+// 当Child.prototype = new Parent()后， 如果new Child()得到一个实例对象child，那么
+// child.__proto__ === Child.prototype;
+// Child.prototype.__proto__ === Parent.prototype
+// 也就意味着在访问child对象的属性时，如果在child上找不到，就会去Child.prototype去找，如果还找不到，就会去Parent.prototype中去找，从而实现了继承。
+Child.prototype = new Parent();
+// 因为constructor属性是包含在prototype里的，上面重新赋值了prototype，所以会导致Child的constructor指向[Function: Parent]，有的时候使用child1.constructor判断类型的时候就会出问题
+// 为了保证类型正确，我们需要将Child.prototype.constructor 指向他原本的构造函数Child
+Child.prototype.constructor = Child;
+
+var child1 = new Child();
+
+child1.getName(); // parentName
+```
+
+### 隐含的问题
+
+1. 如果有属性是引用类型的，一旦某个实例修改了这个属性，所有实例都会受到影响
+
+```javascript
+function Parent() {
+  this.actions = ["eat", "run"];
 }
+function Child() {}
+
+Child.prototype = new Parent();
+Child.prototype.constructor = Child;
+
+const child1 = new Child();
+const child2 = new Child();
+
+child1.actions.pop();
+
+console.log(child1.actions); // ['eat']
+console.log(child2.actions); // ['eat']
 ```
 
-模块使用方式
+2. 创建 Child 实例的时候，不能传参
 
-```js
-  const {
-      increase,
-      reset
-  } = require('./main.js');
+## 构造函数继承
 
-  increase();
-  reset();
+看到上面的问题 1，我们想一下该怎么解决呢？
+
+能不能想办法把 Parent 上的属性方法，添加到 Child 上呢？而不是都存在原型对象上，防止被所有实例共享。
+
+### 实现
+
+针对问题 1. 我们可以使用 call 来复制一遍 Parent 上的操作
+
+```javascript
+function Parent() {
+  this.actions = ["eat", "run"];
+  this.name = "parentName";
+}
+
+function Child() {
+  Parent.call(this);
+}
+
+const child1 = new Child();
+const child2 = new Child();
+
+child1.actions.pop();
+
+console.log(child1.actions); // ['eat']
+console.log(child1.actions); // ['eat', 'run']
 ```
 
-**可能被问到的问题**
+针对问题 2. 我们应该怎么传参呢？
 
-实际执行处理
+```javascript
+function Parent(name, actions) {
+  this.actions = actions;
+  this.name = name;
+}
 
-```js
-  (function(thisValue, exports, require, module) {
-      const dependencyModule1 = require(. / dependencyModule1);
-      const dependencyModule2 = require(. / dependencyModule2);
+function Child(id, name, actions) {
+  Parent.call(this, name); // 如果想直接传多个参数, 可以Parent.apply(this, Array.from(arguments).slice(1));
+  this.id = id;
+}
 
-      // 业务逻辑……
-  }).call(thisValue, exports, require, module);
+const child1 = new Child(1, "c1", ["eat"]);
+const child2 = new Child(2, "c2", ["sing", "jump", "rap"]);
+
+console.log(child1.name); // { actions: [ 'eat' ], name: 'c1', id: 1 }
+console.log(child2.name); // { actions: [ 'sing', 'jump', 'rap' ], name: 'c2', id: 2 }
 ```
 
-> * 优点：
+### 隐含的问题
 
-CommonJS率先在服务端实现了，从框架层面解决依赖、全局变量污染的问题
-* 缺点：
-主要针对了服务端的解决方案。对于异步拉取依赖的处理整合不是那么的友好。
+属性或者方法想被继承的话，只能在构造函数中定义。而如果方法在构造函数内定义了，那么每次创建实例都会创建一遍方法，多占一块内存。
 
-新的问题 —— 异步依赖
+```javascript
+function Parent(name, actions) {
+  this.actions = actions;
+  this.name = name;
+  this.eat = function () {
+    console.log(`${name} - eat`);
+  };
+}
 
-#### AMD规范
+function Child(id) {
+  Parent.apply(this, Array.prototype.slice.call(arguments, 1));
+  this.id = id;
+}
 
-> 通过异步加载 + 允许制定回调函数
+const child1 = new Child(1, "c1", ["eat"]);
+const child2 = new Child(2, "c2", ["sing", "jump", "rap"]);
 
-经典实现框架是：require.js
-
-新增定义方式:
-
-```js
-  // 通过define来定义一个模块，然后require进行加载
-  /*
-  define
-  params: 模块名，依赖模块，工厂方法
-   */
-  define(id, [depends], callback);
-  require([module], callback);
+console.log(child1.eat === child2.eat); // false
 ```
 
-模块定义方式
+## 组合继承
 
-```js
-  define('amdModule', ['dependencyModule1', 'dependencyModule2'], (dependencyModule1, dependencyModule2) => {
-      // 业务逻辑
-      // 处理部分
-      let count = 0;
-      const increase = () => ++count;
-      const reset = () => {
-          count = 0;
-      }
+通过原型链继承我们实现了基本的继承，方法存在 prototype 上，子类可以直接调用。但是引用类型的属性会被所有实例共享，并且不能传参。
 
-      return {
-          increase,
-          reset
-      }
-  })
+通过构造函数继承，我们解决了上面的两个问题：使用 call 在子构造函数内重复一遍属性和方法创建的操作，并且可以传参了。
+
+但是构造函数同样带来了一个问题，就是构造函数内重复创建方法，导致内存占用过多。
+
+是不是突然发现原型链继承是可以解决方法重复创建的问题？ 所以我们将这两种方式结合起来，这就叫做组合继承
+
+### 实现
+
+```javascript
+function Parent(name, actions) {
+  this.name = name;
+  this.actions = actions;
+}
+
+Parent.prototype.eat = function () {
+  console.log(`${this.name} - eat`);
+};
+
+function Child(id) {
+  Parent.apply(this, Array.from(arguments).slice(1));
+  this.id = id;
+}
+
+Child.prototype = new Parent();
+Child.prototype.constructor = Child;
+
+const child1 = new Child(1, "c1", ["hahahahahhah"]);
+const child2 = new Child(2, "c2", ["xixixixixixx"]);
+
+child1.eat(); // c1 - eat
+child2.eat(); // c2 - eat
+
+console.log(child1.eat === child2.eat); // true
 ```
 
-引入模块：
+### 隐含的问题
 
-```js
-  require(['amdModule'], amdModule => {
-      amdModule.increase();
-  })
+调用了两次构造函数，做了重复的操作
+
+1. Parent.apply(this, Array.from(arguments).slice(1));
+2. Child.prototype = new Parent();
+
+## 寄生组合式继承
+
+上面重复调用了 2 次构造函数，想一下，我们可以精简掉哪一步？
+
+我们可以考虑让 Child.prototype 间接访问到 Parent.prototype
+
+### 实现
+
+```javascript
+function Parent(name, actions) {
+  this.name = name;
+  this.actions = actions;
+}
+
+Parent.prototype.eat = function () {
+  console.log(`${this.name} - eat`);
+};
+
+function Child(id) {
+  Parent.apply(this, Array.from(arguments).slice(1));
+  this.id = id;
+}
+
+// 模拟Object.create的效果
+// 如果直接使用Object.create的话，可以写成Child.prototype = Object.create(Parent.prototype);
+let TempFunction = function () {};
+TempFunction.prototype = Parent.prototype;
+Child.prototype = new TempFunction();
+
+Child.prototype.constructor = Child;
+
+const child1 = new Child(1, "c1", ["hahahahahhah"]);
+const child2 = new Child(2, "c2", ["xixixixixixx"]);
 ```
 
-**面试题2: 如果在AMDmodule中想兼容已有代码，怎么办**
+也许有的同学会问，为什么一定要通过桥梁的方式让 Child.prototype 访问到 Parent.prototype？
+直接 Child.prototype = Parent.prototype 不行吗？
+答：不行！！
 
-```js
-  define('amdModule', [], require => {
-      // 引入部分
-      const dependencyModule1 = require(. / dependencyModule1);
-      const dependencyModule2 = require(. / dependencyModule2);
+咱们可以来看一下
 
-      // 处理部分
-      let count = 0;
-      const increase = () => ++count;
-      const reset = () => {
-          count = 0;
-      }
-      // 做一些跟引入依赖相关事宜……
+```javascript
+function Parent(name, actions) {
+  this.name = name;
+  this.actions = actions;
+}
 
-      return {
-          increase,
-          reset
-      }
-  })
+Parent.prototype.eat = function () {
+  console.log(`${this.name} - eat`);
+};
+
+function Child(id) {
+  Parent.apply(this, Array.from(arguments).slice(1));
+  this.id = id;
+}
+
+Child.prototype = Parent.prototype;
+
+Child.prototype.constructor = Child;
+
+console.log(Parent.prototype); // Child { eat: [Function], childEat: [Function] }
+
+Child.prototype.childEat = function () {
+  console.log(`childEat - ${this.name}`);
+};
+
+const child1 = new Child(1, "c1", ["hahahahahhah"]);
+
+console.log(Parent.prototype); // Child { eat: [Function], childEat: [Function] }
 ```
 
-**面试题3: AMD中使用revealing**
-
-```js
-  define('amdModule', [], (require,
-      export, module) => {
-      // 引入部分
-      const dependencyModule1 = require(. / dependencyModule1);
-      const dependencyModule2 = require(. / dependencyModule2);
-
-      // 处理部分
-      let count = 0;
-      const increase = () => ++count;
-      const reset = () => {
-          count = 0;
-      }
-      // 做一些跟引入依赖相关事宜……
-
-      export.increase = increase();
-      export.reset = reset();
-  })
-
-  define('amdModule', [], require => {
-      const otherModule = require('amdModule');
-      otherModule.increase();
-      otherModule.reset();
-  })
-```
-
-**面试题4：兼容AMD&CJS/如何判断CJS和AMD**
-UMD的出现
-
-```js
-  (define('amdModule', [], (require,
-      export, module) => {
-      // 引入部分
-      const dependencyModule1 = require(. / dependencyModule1);
-      const dependencyModule2 = require(. / dependencyModule2);
-
-      // 处理部分
-      let count = 0;
-      const increase = () => ++count;
-      const reset = () => {
-          count = 0;
-      }
-      // 做一些跟引入依赖相关事宜……
-
-      export.increase = increase();
-      export.reset = reset();
-  }))(
-      // 目标是一次性区分CommonJSorAMD
-      typeof module === "object" &&
-      module.exports &&
-      typeof define !== "function" ? // 是 CJS
-      factory => module.exports = factory(require, exports, module) : // 是AMD
-      define
-  )
-```
-
-> * 优点: 适合在浏览器中加载异步模块，可以并行加载多个模块
-
-* 缺点：会有引入成本，不能按需加载
-
-##### CMD规范
-
-> 按需加载
-
-主要应用的框架 sea.js
-
-```js
-  define('module', (require, exports, module) => {
-      let $ = require('jquery');
-      // jquery相关逻辑
-
-      let dependencyModule1 = require('./dependecyModule1');
-      // dependencyModule1相关逻辑
-  })
-```
-
-> * 优点：按需加载，依赖就近
-
-* 依赖于打包，加载逻辑存在于每个模块中，扩大模块体积
-
-**面试题5：AMD&CMD区别**
-答：依赖就近，按需加载
-
-#### ES6模块化
-
-> 走向新时代
-
-新增定义：
-引入关键字 —— import
-导出关键字 —— export
-
-模块引入、导出和定义的地方：
-
-```js
-  // 引入区域
-  import dependencyModule1 from './dependencyModule1.js';
-  import dependencyModule2 from './dependencyModule2.js';
-
-  // 实现代码逻辑
-  let count = 0;
-  export const increase = () => ++count;
-  export const reset = () => {
-      count = 0;
-  }
-
-  // 导出区域
-  export default {
-      increase,
-      reset
-  }
-```
-
-模板引入的地方
-
-```js
-  < script type = "module"
-  src = "esModule.js" > < /script>
-```
-
-node中：
-
-```js
-  import {
-      increase,
-      reset
-  } from './esModule.mjs';
-  increase();
-  reset();
-
-  import esModule from './esModule.mjs';
-  esModule.increase();
-  esModule.reset();
-```
-
-**面试题6：动态模块**
-考察：export promise
-
-ES11原生解决方案：
-
-```js
-  import('./esModule.js').then(dynamicEsModule => {
-      dynamicEsModule.increase();
-  })
-```
-
-> * 优点（重要性）：通过一种最统一的形态整合了js的模块化
-
-* 缺点（局限性）：本质上还是运行时的依赖分析
-
-### 解决模块化的新思路 - 前端工程化
-
-#### 背景
-根本问题 - 运行时进行依赖分析
-
-> 前端的模块化处理方案依赖于运行时分析
-
-解决方案：线下执行
-grunt gulp webpack
-
-```js
-  < !doctype html >
-      <
-      script src = "main.js" > < /script> <
-      script >
-      // 给构建工具一个标识位
-      require.config(__FRAME_CONFIG__); <
-  /script> <
-  script >
-      require(['a', 'e'], () => {
-          // 业务处理
-      }) <
-      /script> <
-      /html>
-```
-
-```js
-  define('a', () => {
-      let b = require('b');
-      let c = require('c');
-
-      export.run = () {
-          // run
-      }
-  })
-```
-
-##### 工程化实现
-
-step1: 扫描依赖关系表：
-
-```js
-  {
-      a: ['b', 'c'],
-      b: ['d'],
-      e: []
-  }
-```
-
-step2: 重新生成依赖数据模板
-
-```js
-  < !doctype html >
-      <
-      script src = "main.js" > < /script> <
-      script >
-      // 构建工具生成数据
-      require.config({
-          "deps": {
-              a: ['b', 'c'],
-              b: ['d'],
-              e: []
-          }
-      }) <
-      /script> <
-      script >
-      require(['a', 'e'], () => {
-          // 业务处理
-      }) <
-      /script> <
-      /html>
-```
-
-step3: 执行工具，采用模块化方案解决模块化处理依赖
-
-```js
-  define('a', ['b', 'c'], () => {
-      // 执行代码
-      export.run = () => {}
-  })
-```
-
-> 优点：
-
-1. 构建时生成配置，运行时执行
-2. 最终转化成执行处理依赖
-3. 可以拓展
-
-#### 完全体 webpack为核心的工程化 + mvvm框架组件化 + 设计模式
+可以看到，在给 Child.prototype 添加新的属性或者方法后，Parent.prototype 也会随之改变，这可不是我们想看到的。
