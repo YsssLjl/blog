@@ -77,15 +77,15 @@
 //   };
 // };
 
-var arr = [[1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14]]]], 10];
+// var arr = [[1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14]]]], 10];
 
-const fun = (list) => {
-  const flatten = (list) => {
-    return list.reduce(
-      (acc, cur) => acc.concat(Array.isArray(cur) ? flatten(cur) : cur),
-      []
-    );
-  };
-  return Array.from(new Set(flatten(list))).sort((a, b) => a - b);
-};
-console.log(fun(arr));
+// const fun = (list) => {
+//   const flatten = (list) => {
+//     return list.reduce(
+//       (acc, cur) => acc.concat(Array.isArray(cur) ? flatten(cur) : cur),
+//       []
+//     );
+//   };
+//   return Array.from(new Set(flatten(list))).sort((a, b) => a - b);
+// };
+// console.log(fun(arr));
